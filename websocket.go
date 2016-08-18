@@ -1,3 +1,6 @@
+//TODO: send commands to control the robot
+//TODO: allow only one connection to control the robot, and time it out if no commands are received in a period of time
+
 package main
 
 import (

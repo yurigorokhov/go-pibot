@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/engine/standard"
 	"github.com/labstack/echo/middleware"
 
+	"golang.org/x/net/websocket"
 	"mime/multipart"
 	"net/textproto"
 )
@@ -21,6 +22,9 @@ func main() {
 	piCamera := NewPiCamFileSystem("./public/walle.jpg")
 	quitChan := make(chan bool)
 	piCamera.Start(quitChan)
+
+	// start websocket handler
+	webSocketPool := NewWebSocketConnectionPool()
 
 	// routes
 	e.GET("/picam.mjpeg", func(c echo.Context) error {
@@ -51,5 +55,13 @@ func main() {
 
 	e.File("/", "public/index.html")
 	e.File("/logo.png", "public/raspberry-pi-logo.png")
+	e.GET("/ws", standard.WrapHandler(webSocketHandler(webSocketPool)))
 	e.Run(standard.New(":8080"))
+}
+
+func webSocketHandler(pool *WebSocketConnectionPool) websocket.Handler {
+	return websocket.Handler(func(ws *websocket.Conn) {
+		newConnection := pool.OpenConnection(ws)
+		pool.ProcessCommands(newConnection)
+	})
 }

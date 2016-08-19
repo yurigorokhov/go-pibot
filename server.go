@@ -53,6 +53,7 @@ func main() {
 		return nil
 	})
 
+	e.Static("/public", "public")
 	e.File("/", "public/index.html")
 	e.File("/logo.png", "public/raspberry-pi-logo.png")
 	e.GET("/ws", standard.WrapHandler(webSocketHandler(webSocketPool)))

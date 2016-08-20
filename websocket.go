@@ -10,6 +10,11 @@ import (
 	"sync"
 )
 
+type RobotMoveCommand struct {
+	Direction RobotDirection
+	Speed     uint
+}
+
 // Directon to move the robot
 type RobotDirection int
 
@@ -18,6 +23,7 @@ const (
 	Backwards
 	Left
 	Right
+	Stop
 )
 
 // A type of command
@@ -43,16 +49,18 @@ type WebSocketConnection struct {
 
 // Keeps track of all open websocket connections
 type WebSocketConnectionPool struct {
-	openConnections   []*WebSocketConnection
-	connectionCounter uint64
-	connectionsLock   *sync.Mutex
+	openConnections     []*WebSocketConnection
+	connectionCounter   uint64
+	connectionsLock     *sync.Mutex
+	robotCommandChannel chan<- RobotMoveCommand
 }
 
-func NewWebSocketConnectionPool() *WebSocketConnectionPool {
+func NewWebSocketConnectionPool(robotCommandChanel chan<- RobotMoveCommand) *WebSocketConnectionPool {
 	return &WebSocketConnectionPool{
-		openConnections:   make([]*WebSocketConnection, 0),
-		connectionCounter: 0,
-		connectionsLock:   &sync.Mutex{},
+		openConnections:     make([]*WebSocketConnection, 0),
+		connectionCounter:   0,
+		connectionsLock:     &sync.Mutex{},
+		robotCommandChannel: robotCommandChanel,
 	}
 }
 
@@ -120,8 +128,10 @@ func (pool *WebSocketConnectionPool) ProcessCommands(connection *WebSocketConnec
 				return
 			}
 			direction = RobotDirection(directionFloat)
-			fmt.Printf("COMMAND: Moving robot in direction %+v with speed %+v\n", direction, speed)
-			//TODO: actually move the robot :)
+			pool.robotCommandChannel <- RobotMoveCommand{
+				Direction: direction,
+				Speed:     uint(speed),
+			}
 		default:
 			panic("Unhandled command!")
 		}

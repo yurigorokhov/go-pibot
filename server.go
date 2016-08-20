@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/engine/standard"
 	"github.com/labstack/echo/middleware"
+	"github.com/yurigorokhov/go-megapi"
 
 	"golang.org/x/net/websocket"
 	"mime/multipart"
@@ -18,13 +20,30 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	// initialize motors
+	dev, err := megapi.Find_megapi_usb_device()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Found device: {}", dev)
+	megaPi, err := megapi.NewMegaPi(dev)
+	if err != nil {
+		panic(err)
+	}
+	defer megaPi.Close()
+	time.Sleep(2 * time.Second)
+	robotCommandChannel := make(chan RobotMoveCommand, 100)
+	megaPiRobot := NewMegaPiBot(megaPi)
+	robotController := NewRobotController(megaPiRobot, robotCommandChannel)
+	robotController.Start()
+
 	// start camera
 	piCamera := NewPiCamFileSystem("./public/walle.jpg")
 	quitChan := make(chan bool)
 	piCamera.Start(quitChan)
 
 	// start websocket handler
-	webSocketPool := NewWebSocketConnectionPool()
+	webSocketPool := NewWebSocketConnectionPool(robotCommandChannel)
 
 	// routes
 	e.GET("/picam.mjpeg", func(c echo.Context) error {

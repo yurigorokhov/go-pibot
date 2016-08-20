@@ -5,6 +5,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"golang.org/x/net/websocket"
 	"sync"
@@ -33,6 +34,7 @@ const (
 
 	// For controlling robot movement (Forward, Backwards, Left, Right)
 	MoveRobot ClientCommandType = iota
+	TakeControl
 )
 
 // Represents a command coming from the client
@@ -53,14 +55,18 @@ type WebSocketConnectionPool struct {
 	connectionCounter   uint64
 	connectionsLock     *sync.Mutex
 	robotCommandChannel chan<- RobotMoveCommand
+
+	// the connection that is currently controlling the robot
+	controllingConnection *WebSocketConnection
 }
 
 func NewWebSocketConnectionPool(robotCommandChanel chan<- RobotMoveCommand) *WebSocketConnectionPool {
 	return &WebSocketConnectionPool{
-		openConnections:     make([]*WebSocketConnection, 0),
-		connectionCounter:   0,
-		connectionsLock:     &sync.Mutex{},
-		robotCommandChannel: robotCommandChanel,
+		openConnections:       make([]*WebSocketConnection, 1),
+		connectionCounter:     0,
+		connectionsLock:       &sync.Mutex{},
+		robotCommandChannel:   robotCommandChanel,
+		controllingConnection: nil,
 	}
 }
 
@@ -88,6 +94,28 @@ func (pool *WebSocketConnectionPool) CloseConnection(connection *WebSocketConnec
 			break
 		}
 	}
+
+	// if this is the controlling connection, remove it
+	if pool.controllingConnection.id == connection.id {
+		pool.controllingConnection = nil
+	}
+
+}
+
+func (pool *WebSocketConnectionPool) HasControlLock(connection *WebSocketConnection) bool {
+	pool.connectionsLock.Lock()
+	defer pool.connectionsLock.Unlock()
+	return pool.controllingConnection != nil && pool.controllingConnection.id == connection.id
+}
+
+func (pool *WebSocketConnectionPool) TakeControl(connection *WebSocketConnection) error {
+	pool.connectionsLock.Lock()
+	defer pool.connectionsLock.Unlock()
+	if pool.controllingConnection != nil && connection.id != pool.controllingConnection.id {
+		return errors.New(fmt.Sprintln("Somebody is currently controlling the robot"))
+	}
+	pool.controllingConnection = connection
+	return nil
 }
 
 func (pool *WebSocketConnectionPool) ProcessCommands(connection *WebSocketConnection) {
@@ -114,6 +142,13 @@ func (pool *WebSocketConnectionPool) ProcessCommands(connection *WebSocketConnec
 		// execute command!
 		switch command.Type {
 		case MoveRobot:
+
+			// check if we are currently holding the lock on the robot
+			if !pool.HasControlLock(connection) {
+				continue
+			}
+
+			// process command
 			var direction RobotDirection
 			speed, valid := command.Data["speed"].(float64)
 			if !valid {
@@ -132,6 +167,8 @@ func (pool *WebSocketConnectionPool) ProcessCommands(connection *WebSocketConnec
 				Direction: direction,
 				Speed:     uint(speed),
 			}
+		case TakeControl:
+			pool.TakeControl(connection)
 		default:
 			panic("Unhandled command!")
 		}

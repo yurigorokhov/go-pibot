@@ -53,5 +53,8 @@ function filter500( value, type ){
                 ws.send(JSON.stringify(command));
             }
         });
+        for(let i = 0; i < buttons.length; i++) {
+            console.log(buttons[i]);
+        }
     });
 })();

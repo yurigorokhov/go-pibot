@@ -25,18 +25,16 @@ func (controller *RobotController) Start() {
 		Direction: Stop,
 		Speed:     0,
 	})
-	go func() {
-		for {
-			select {
-			case command := <-controller.commandChannel:
-				controller.robot.HandleCommand(command)
-			case <-time.After(time.Second * 2):
-				controller.robot.HandleCommand(RobotMoveCommand{
-					Direction: Stop,
-					Speed:     0,
-				})
+	for {
+		select {
+		case command := <-controller.commandChannel:
+			controller.robot.HandleCommand(command)
+		case <-time.After(time.Second * 2):
+			controller.robot.HandleCommand(RobotMoveCommand{
+				Direction: Stop,
+				Speed:     0,
+			})
 
-			}
 		}
-	}()
+	}
 }

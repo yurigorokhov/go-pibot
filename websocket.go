@@ -143,11 +143,6 @@ func (pool *WebSocketConnectionPool) ProcessCommands(connection *WebSocketConnec
 		switch command.Type {
 		case MoveRobot:
 
-			// check if we are currently holding the lock on the robot
-			if !pool.HasControlLock(connection) {
-				continue
-			}
-
 			// process command
 			var direction RobotDirection
 			speed, valid := command.Data["speed"].(float64)

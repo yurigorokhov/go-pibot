@@ -1,0 +1,40 @@
+html, body {
+    margin: 0;
+    padding: 0;
+}
+body {
+    background: #000; 
+    font: 400 18px/1.75 'Open Sans', arial, helvetica, sans-serif;
+}
+#slider { 
+    background: #69CCF0;
+}
+.robot-controls {
+    background: #000;
+    border-top: .5em solid #69CCF0;
+    bottom: 0;
+    display: flex;
+    height: 5em;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+}
+.robot-controls > div {
+    flex: 1 1 0;
+    padding: .75em 2em;
+    width: 50%;
+}
+.direction-control {
+    display: flex;
+}
+.direction-control > i {
+    background: #69CCF0;
+    border: 3px inset #fff;
+    border-radius: .25em;
+    flex: 1 1 0;
+    font-size: 2em;
+    margin: 0 1em;
+    padding: .25em;
+    text-align: center;
+    vertical-align: middle;
+}

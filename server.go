@@ -1,77 +1,53 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
-	"time"
-
+	"github.com/hybridgroup/gobot"
+	"github.com/hybridgroup/gobot/platforms/megapi"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/engine/standard"
 	"github.com/labstack/echo/middleware"
-	"github.com/yurigorokhov/go-megapi"
 
 	"golang.org/x/net/websocket"
-	"mime/multipart"
-	"net/textproto"
 )
+
+func initializeRobot(robotCommandChannel <-chan RobotMoveCommand) {
+	gbot := gobot.NewGobot()
+
+	// initialize motors
+	megaPiAdaptor := megapi.NewMegaPiAdaptor("megapi", "/dev/ttyS0")
+	leftMotor := megapi.NewMotorDriver(megaPiAdaptor, "motor left", 1)
+	rightMotor := megapi.NewMotorDriver(megaPiAdaptor, "motor right", 4)
+
+	// create robot
+	megaPiRobot := NewMegaPiBot(leftMotor, rightMotor)
+	robotController := NewRobotController(megaPiRobot, robotCommandChannel)
+
+	// define work
+	work := func() {
+		robotController.Start()
+	}
+
+	robot := gobot.NewRobot("megaPiBot",
+		[]gobot.Connection{megaPiAdaptor},
+		[]gobot.Device{leftMotor, rightMotor},
+		work,
+	)
+	gbot.AddRobot(robot)
+	gbot.Start()
+}
 
 func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	// initialize motors
-	dev, err := megapi.Find_megapi_usb_device()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Found device: {}", dev)
-	megaPi, err := megapi.NewMegaPi(dev)
-	if err != nil {
-		panic(err)
-	}
-	defer megaPi.Close()
-	time.Sleep(2 * time.Second)
-	robotCommandChannel := make(chan RobotMoveCommand, 100)
-	megaPiRobot := NewMegaPiBot(megaPi)
-	robotController := NewRobotController(megaPiRobot, robotCommandChannel)
-	robotController.Start()
-
-	// start camera
-	piCamera := NewPiCamFileSystem("./public/walle.jpg")
-	quitChan := make(chan bool)
-	piCamera.Start(quitChan)
+	robotCommandChannel := make(chan RobotMoveCommand)
+	go initializeRobot(robotCommandChannel)
 
 	// start websocket handler
 	webSocketPool := NewWebSocketConnectionPool(robotCommandChannel)
 
 	// routes
-	e.GET("/picam.mjpeg", func(c echo.Context) error {
-
-		// return image as multipart file transfer
-		mimeWriter := multipart.NewWriter(c.Response())
-
-		contentType := fmt.Sprintf("multipart/x-mixed-replace;boundary=%s", mimeWriter.Boundary())
-		c.Response().Header().Set("Content-Type", contentType)
-
-		// start listening for images
-		source := piCamera.Subscribe()
-		for {
-			partHeader := make(textproto.MIMEHeader)
-			partHeader.Add("Content-Type", "image/jpeg")
-			partWriter, partErr := mimeWriter.CreatePart(partHeader)
-			if nil != partErr {
-				break
-			}
-			imageData := <-source
-			if _, writeErr := partWriter.Write(imageData); nil != writeErr {
-				break
-			}
-			c.Response().(http.Flusher).Flush()
-		}
-		return nil
-	})
-
 	e.Static("/public", "public")
 	e.File("/", "public/index.html")
 	e.File("/logo.png", "public/raspberry-pi-logo.png")

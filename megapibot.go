@@ -2,19 +2,21 @@ package main
 
 import (
 	"fmt"
-	"github.com/yurigorokhov/go-megapi"
+	"github.com/hybridgroup/gobot/platforms/megapi"
 )
 
-const MAX_MOTOR_SPEED = 150
+const MAX_MOTOR_SPEED = 250
 const MIN_MOTOR_SPEED = 50
 
 type MegaPiBot struct {
-	megaPi *megapi.MegaPi
+	leftMotor  *megapi.MotorDriver
+	rightMotor *megapi.MotorDriver
 }
 
-func NewMegaPiBot(megaPi *megapi.MegaPi) Robot {
+func NewMegaPiBot(leftMotor *megapi.MotorDriver, rightMotor *megapi.MotorDriver) Robot {
 	return &MegaPiBot{
-		megaPi: megaPi,
+		leftMotor:  leftMotor,
+		rightMotor: rightMotor,
 	}
 }
 
@@ -26,24 +28,26 @@ func (robot *MegaPiBot) HandleCommand(command RobotMoveCommand) {
 	switch command.Direction {
 	case Forward:
 		fmt.Printf("ROBOT: forward at speed %+v\n", adjustedSpeed)
-		robot.megaPi.DcMotorRun(1, int16(adjustedSpeed))
-		robot.megaPi.DcMotorRun(2, -int16(adjustedSpeed))
+		robot.leftMotor.Speed(int16(adjustedSpeed))
+		robot.rightMotor.Speed(-int16(adjustedSpeed))
 	case Backwards:
 		fmt.Printf("ROBOT: backwards at speed %+v\n", adjustedSpeed)
-		robot.megaPi.DcMotorRun(1, -int16(adjustedSpeed))
-		robot.megaPi.DcMotorRun(2, +int16(adjustedSpeed))
+		robot.leftMotor.Speed(-int16(adjustedSpeed))
+		robot.rightMotor.Speed(int16(adjustedSpeed))
 	case Left:
 		fmt.Printf("ROBOT: left at speed %+v\n", adjustedSpeed)
-		robot.megaPi.DcMotorRun(1, int16(adjustedSpeed)+1)
-		robot.megaPi.DcMotorRun(2, int16(adjustedSpeed))
+		robot.leftMotor.Speed(-int16(adjustedSpeed))
+		robot.rightMotor.Speed(-int16(adjustedSpeed))
 	case Right:
 		fmt.Printf("ROBOT: right at speed %+v\n", adjustedSpeed)
-		robot.megaPi.DcMotorRun(1, -int16(adjustedSpeed)+1)
-		robot.megaPi.DcMotorRun(2, -int16(adjustedSpeed))
+		robot.leftMotor.Speed(+int16(adjustedSpeed))
+		robot.rightMotor.Speed(+int16(adjustedSpeed))
 	case Stop:
 		fmt.Println("ROBOT: stopping")
-		robot.megaPi.DcMotorStop(1)
-		robot.megaPi.DcMotorStop(2)
+		robot.leftMotor.Speed(1)
+		robot.leftMotor.Speed(0)
+		robot.rightMotor.Speed(1)
+		robot.rightMotor.Speed(0)
 	default:
 		fmt.Println("PiBot: unknown move command")
 	}

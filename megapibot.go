@@ -28,25 +28,23 @@ func (robot *MegaPiBot) HandleCommand(command RobotMoveCommand) {
 	switch command.Direction {
 	case Forward:
 		fmt.Printf("ROBOT: forward at speed %+v\n", adjustedSpeed)
-		robot.leftMotor.Speed(int16(adjustedSpeed))
+		robot.leftMotor.Speed(-int16(adjustedSpeed))
 		robot.rightMotor.Speed(-int16(adjustedSpeed))
 	case Backwards:
 		fmt.Printf("ROBOT: backwards at speed %+v\n", adjustedSpeed)
-		robot.leftMotor.Speed(-int16(adjustedSpeed))
-		robot.rightMotor.Speed(int16(adjustedSpeed))
+		robot.leftMotor.Speed(+int16(adjustedSpeed))
+		robot.rightMotor.Speed(+int16(adjustedSpeed))
 	case Left:
 		fmt.Printf("ROBOT: left at speed %+v\n", adjustedSpeed)
-		robot.leftMotor.Speed(-int16(adjustedSpeed))
+		robot.leftMotor.Speed(+int16(adjustedSpeed))
 		robot.rightMotor.Speed(-int16(adjustedSpeed))
 	case Right:
 		fmt.Printf("ROBOT: right at speed %+v\n", adjustedSpeed)
-		robot.leftMotor.Speed(+int16(adjustedSpeed))
+		robot.leftMotor.Speed(-int16(adjustedSpeed))
 		robot.rightMotor.Speed(+int16(adjustedSpeed))
 	case Stop:
 		fmt.Println("ROBOT: stopping")
-		robot.leftMotor.Speed(1)
 		robot.leftMotor.Speed(0)
-		robot.rightMotor.Speed(1)
 		robot.rightMotor.Speed(0)
 	default:
 		fmt.Println("PiBot: unknown move command")

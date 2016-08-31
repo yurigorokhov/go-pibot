@@ -26,7 +26,7 @@ function filter500( value, type ){
     };
     document.addEventListener('DOMContentLoaded', (e) => {
         const ws = connectWS();
-        const buttons = document.querySelectorAll('.direction-controls i');
+        const buttons = document.querySelectorAll('.direction-control i');
         noUiSlider.create(slider, {
             start: [ speed ],
             connect: 'lower',
@@ -47,14 +47,17 @@ function filter500( value, type ){
             speed = parseInt(value[0], 10);
         });
         document.addEventListener('keydown', (e) => {
-            console.log(e.keyCode);
             if(validEntry.hasOwnProperty(e.keyCode)) {
                 let command = generateCommand(validEntry[e.keyCode], speed);
                 ws.send(JSON.stringify(command));
             }
+            if(e.keyCode === 187 || e.keyCode === 189) {
+                if(e.shiftKey) {
+                    let modifier = e.keyCode === 187 ? 1 : -1;
+                    speed = speed + (modifier);
+                    slider.noUiSlider.set(speed)
+                }
+            }
         });
-        for(let i = 0; i < buttons.length; i++) {
-            console.log(buttons[i]);
-        }
     });
 })();

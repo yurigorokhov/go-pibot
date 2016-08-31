@@ -5,6 +5,10 @@ html, body {
 body {
     background: #000; 
     font: 400 18px/1.75 'Open Sans', arial, helvetica, sans-serif;
+    overflow: hidden;
+}
+.video-image {
+    width: 100vw;
 }
 #slider { 
     background: #69CCF0;
@@ -16,6 +20,7 @@ body {
     display: flex;
     height: 5em;
     overflow: hidden;
+    opacity: .9;
     position: fixed;
     width: 100%;
 }

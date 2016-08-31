@@ -25,6 +25,10 @@ const (
 	Left
 	Right
 	Stop
+	ForwardRight
+	ForwardLeft
+	BackwardsRight
+	BackwardsLeft
 )
 
 // A type of command

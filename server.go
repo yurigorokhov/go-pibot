@@ -1,39 +1,57 @@
 package main
 
 import (
+	"flag"
 	"github.com/hybridgroup/gobot"
 	"github.com/hybridgroup/gobot/platforms/megapi"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/engine/standard"
 	"github.com/labstack/echo/middleware"
+	"log"
 
 	"golang.org/x/net/websocket"
 )
 
+var robotType string
+
+func init() {
+	flag.StringVar(&robotType, "robot", "megapi", "the robot to use (megapi, mock)")
+}
+
 func initializeRobot(robotCommandChannel <-chan RobotMoveCommand) {
-	gbot := gobot.NewGobot()
-
-	// initialize motors
-	megaPiAdaptor := megapi.NewMegaPiAdaptor("megapi", "/dev/ttyS0")
-	leftMotor := megapi.NewMotorDriver(megaPiAdaptor, "motor left", 1)
-	rightMotor := megapi.NewMotorDriver(megaPiAdaptor, "motor right", 4)
-
-	// create robot
-	megaPiRobot := NewMegaPiBot(leftMotor, rightMotor)
-	robotController := NewRobotController(megaPiRobot, robotCommandChannel)
-
-	// define work
-	work := func() {
+	flag.Parse()
+	if robotType == "mock" {
+		log.Println("Starting with a Mock bot")
+		mockBot := NewMockBot()
+		robotController := NewRobotController(mockBot, robotCommandChannel)
 		robotController.Start()
-	}
+	} else if robotType == "megapi" {
+		gbot := gobot.NewGobot()
 
-	robot := gobot.NewRobot("megaPiBot",
-		[]gobot.Connection{megaPiAdaptor},
-		[]gobot.Device{leftMotor, rightMotor},
-		work,
-	)
-	gbot.AddRobot(robot)
-	gbot.Start()
+		// initialize motors
+		megaPiAdaptor := megapi.NewMegaPiAdaptor("megapi", "/dev/ttyS0")
+		leftMotor := megapi.NewMotorDriver(megaPiAdaptor, "motor left", 1)
+		rightMotor := megapi.NewMotorDriver(megaPiAdaptor, "motor right", 4)
+
+		// create robot
+		megaPiRobot := NewMegaPiBot(leftMotor, rightMotor)
+		robotController := NewRobotController(megaPiRobot, robotCommandChannel)
+
+		// define work
+		work := func() {
+			robotController.Start()
+		}
+
+		robot := gobot.NewRobot("megaPiBot",
+			[]gobot.Connection{megaPiAdaptor},
+			[]gobot.Device{leftMotor, rightMotor},
+			work,
+		)
+		gbot.AddRobot(robot)
+		gbot.Start()
+	} else {
+		panic("Unsupported robot type")
+	}
 }
 
 func main() {

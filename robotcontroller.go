@@ -34,7 +34,6 @@ func (controller *RobotController) Start() {
 				Direction: Stop,
 				Speed:     0,
 			})
-
 		}
 	}
 }

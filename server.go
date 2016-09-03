@@ -30,8 +30,8 @@ func initializeRobot(robotCommandChannel <-chan RobotMoveCommand) {
 
 		// initialize motors
 		megaPiAdaptor := megapi.NewMegaPiAdaptor("megapi", "/dev/ttyS0")
-		leftMotor := megapi.NewMotorDriver(megaPiAdaptor, "motor left", 1)
-		rightMotor := megapi.NewMotorDriver(megaPiAdaptor, "motor right", 4)
+		leftMotor := megapi.NewMotorDriver(megaPiAdaptor, "motor left", 4)
+		rightMotor := megapi.NewMotorDriver(megaPiAdaptor, "motor right", 1)
 
 		// create robot
 		megaPiRobot := NewMegaPiBot(leftMotor, rightMotor)

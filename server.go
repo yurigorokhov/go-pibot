@@ -2,11 +2,10 @@ package main
 
 import (
 	"flag"
-	"github.com/hybridgroup/gobot"
-	"github.com/hybridgroup/gobot/platforms/megapi"
 	"github.com/labstack/echo"
-	"github.com/labstack/echo/engine/standard"
 	"github.com/labstack/echo/middleware"
+	"gobot.io/x/gobot"
+	"gobot.io/x/gobot/platforms/megapi"
 	"log"
 
 	"golang.org/x/net/websocket"
@@ -26,12 +25,11 @@ func initializeRobot(robotCommandChannel <-chan RobotMoveCommand) {
 		robotController := NewRobotController(mockBot, robotCommandChannel)
 		robotController.Start()
 	} else if robotType == "megapi" {
-		gbot := gobot.NewGobot()
 
 		// initialize motors
-		megaPiAdaptor := megapi.NewMegaPiAdaptor("megapi", "/dev/ttyS0")
-		leftMotor := megapi.NewMotorDriver(megaPiAdaptor, "motor left", 4)
-		rightMotor := megapi.NewMotorDriver(megaPiAdaptor, "motor right", 1)
+		megaPiAdaptor := megapi.NewAdaptor("/dev/ttyS0")
+		leftMotor := megapi.NewMotorDriver(megaPiAdaptor, 4)
+		rightMotor := megapi.NewMotorDriver(megaPiAdaptor, 1)
 
 		// create robot
 		megaPiRobot := NewMegaPiBot(leftMotor, rightMotor)
@@ -42,13 +40,15 @@ func initializeRobot(robotCommandChannel <-chan RobotMoveCommand) {
 			robotController.Start()
 		}
 
+		devices := make([]gobot.Device, 2)
+		devices[0] = gobot.Device(leftMotor)
+		devices[1] = rightMotor
 		robot := gobot.NewRobot("megaPiBot",
 			[]gobot.Connection{megaPiAdaptor},
 			[]gobot.Device{leftMotor, rightMotor},
 			work,
 		)
-		gbot.AddRobot(robot)
-		gbot.Start()
+		robot.Start()
 	} else {
 		panic("Unsupported robot type")
 	}
@@ -69,8 +69,8 @@ func main() {
 	e.Static("/public", "public")
 	e.File("/", "public/index.html")
 	e.File("/logo.png", "public/raspberry-pi-logo.png")
-	e.GET("/ws", standard.WrapHandler(webSocketHandler(webSocketPool)))
-	e.Run(standard.New(":8080"))
+	e.GET("/ws", echo.WrapHandler(webSocketHandler(webSocketPool)))
+	e.Logger.Fatal(e.Start(":8080"))
 }
 
 func webSocketHandler(pool *WebSocketConnectionPool) websocket.Handler {

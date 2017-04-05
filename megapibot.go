@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/hybridgroup/gobot/platforms/megapi"
+	"gobot.io/x/gobot/platforms/megapi"
 )
 
 var _ Robot = (*MegaPiBot)(nil)

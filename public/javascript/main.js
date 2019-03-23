@@ -27,15 +27,16 @@ function setupIndicator() {
     let canvas = new fabric.Canvas('canvas');
     let rect = new fabric.Rect({
         fill: 'red',
-        width: 50,
-        height: 80,
+        width: 20,
+        height: 40,
         left: 15,
         top: 50
     });
     let triangle = new fabric.Triangle({
         fill: 'red',
-        width: 80,
-        height: 50
+        top: 20,
+        width: 50,
+        height: 30
     });
     let arrow = new fabric.Group([rect, triangle]);
     arrow.set({top: 65, left: 75, originX: 'center', originY: 'center'})
@@ -44,10 +45,14 @@ function setupIndicator() {
     _indicator = arrow;
 }
 function updateIndicator(command, speed) {
+    _indicator.visible = true
     switch (command) {
         case COMMAND_FORWARD:
+            _indicator.set({angle: 0});
+            break;
         case COMMAND_STOP:
             _indicator.set({angle: 0});
+            _indicator.visible = false
             break;
         case COMMAND_BACK:
             _indicator.set({angle: 180});
@@ -73,11 +78,7 @@ function updateIndicator(command, speed) {
         default:
             break;
     }
-    if(speed === 0) {
-        _indicator.forEachObject(x => x.set({fill: 'rgba(0,0,0,0)'}), this);
-    } else {
-        _indicator.forEachObject(x => x.set({fill: `hsl(${120/100 * speed}, 100%, 50%)`}), this);
-    }
+    _indicator.forEachObject(x => x.set({fill: `hsl(${120/100 * speed}, 100%, 50%)`}), this);
     _canvas.renderAll();
 }
 function generateCommand(direction, speed) {
@@ -134,6 +135,7 @@ function sendCommand(ws, keysPressed, speed) {
         beta: 0,
         gamma: 0
     }
+    let calibrated = false;
 
     var videoHref = "http://" + window.location.hostname + ":9090/stream/video.mjpeg";
     document.getElementById('main-video-img').setAttribute("src", videoHref);
@@ -168,33 +170,37 @@ function sendCommand(ws, keysPressed, speed) {
             speed = parseInt(value[0], 10);
         });
         if(window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', function(e) {
-                currentOrientation.alpha = e.alpha
-                currentOrientation.beta = e.beta
-                currentOrientation.gamma = e.gamma
+            if (calibrated) {
+                window.addEventListener('deviceorientation', function(e) {
+                    currentOrientation.alpha = e.alpha
+                    currentOrientation.beta = e.beta
+                    currentOrientation.gamma = e.gamma
 
-                const relativeGamma = currentOrientation.gamma - calibration.gamma
-                const relativeBeta = currentOrientation.beta - calibration.beta
+                    const relativeGamma = currentOrientation.gamma - calibration.gamma
+                    const relativeBeta = currentOrientation.beta - calibration.beta
 
-                keysPressed.set(FORWARD, false)
-                keysPressed.set(BACK, false)
-                keysPressed.set(RIGHT, false)
-                keysPressed.set(LEFT, false)
-                if (relativeGamma < -10 && relativeGamma > -80) {
-                    speed = Math.min((Math.abs(relativeGamma) - 10) * (100/40), 100)
-                    slider.noUiSlider.set(speed)
-                    keysPressed.set(FORWARD, true)
-                } else if (relativeGamma > 10 && relativeGamma < 80) {
-                    speed = Math.min((Math.abs(relativeGamma) - 10) * (100/40), 100)
-                    slider.noUiSlider.set(speed)
-                    keysPressed.set(BACK, true)
-                }
-                if(relativeBeta < -20) {
-                    keysPressed.set(RIGHT, true)
-                } else if (relativeBeta > 20) {
-                    keysPressed.set(LEFT, true)
-                }
-            })
+                    keysPressed.set(FORWARD, false)
+                    keysPressed.set(BACK, false)
+                    keysPressed.set(RIGHT, false)
+                    keysPressed.set(LEFT, false)
+                    if (relativeGamma < -10 && relativeGamma > -80) {
+                        speed = Math.min((Math.abs(relativeGamma) - 10) * (100/40), 100)
+                        slider.noUiSlider.set(speed)
+                        keysPressed.set(FORWARD, true)
+                    } else if (relativeGamma > 10 && relativeGamma < 80) {
+                        speed = Math.min((Math.abs(relativeGamma) - 10) * (100/40), 100)
+                        slider.noUiSlider.set(speed)
+                        keysPressed.set(BACK, true)
+                    }
+                    if(relativeBeta < -20) {
+                        keysPressed.set(RIGHT, true)
+                    } else if (relativeBeta > 20) {
+                        keysPressed.set(LEFT, true)
+                    }
+                })
+            }
+        } else {
+            document.getElementById('calibrate').style.display = 'none';
         }
         document.addEventListener('keydown', (e) => {
 
@@ -226,6 +232,7 @@ function sendCommand(ws, keysPressed, speed) {
             calibration.alpha = currentOrientation.alpha
             calibration.beta = currentOrientation.beta
             calibration.gamma = currentOrientation.gamma
+            calibrated = true
         })
         setInterval(() => {
             sendCommand(ws, keysPressed, speed);

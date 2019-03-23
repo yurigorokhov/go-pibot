@@ -73,7 +73,7 @@ function sendCommand(ws, keysPressed, speed) {
     }
 
     var videoHref = "http://" + window.location.hostname + ":9090/stream/video.mjpeg";
-    document.getElementById('main-video-img').setAttribute("src", videoHref);
+    //document.getElementById('main-video-img').setAttribute("src", videoHref);
     const slider = document.getElementById('slider');
     let speed = 50;
     const keysPressed = new Map([
@@ -116,9 +116,11 @@ function sendCommand(ws, keysPressed, speed) {
                 keysPressed.set(BACK, false)
                 keysPressed.set(RIGHT, false)
                 keysPressed.set(LEFT, false)
-                if (relativeGamma < -20) {
+                if (relativeGamma < -10 && relativeGamma > -50) {
+                    speed = (Math.abs(relativeGamma) - 10) * (100/40)
                     keysPressed.set(FORWARD, true)
-                } else if (relativeGamma > 20) {
+                } else if (relativeGamma > 10 && relativeGamma < 50) {
+                    speed = (Math.abs(relativeGamma) - 10) * (100/40)
                     keysPressed.set(BACK, true)
                 }
                 if(relativeBeta < -20) {

@@ -170,35 +170,37 @@ function sendCommand(ws, keysPressed, speed) {
             speed = parseInt(value[0], 10);
         });
         if(window.DeviceOrientationEvent) {
-            if (calibrated) {
-                window.addEventListener('deviceorientation', function(e) {
-                    currentOrientation.alpha = e.alpha
-                    currentOrientation.beta = e.beta
-                    currentOrientation.gamma = e.gamma
+            window.addEventListener('deviceorientation', function(e) {
+                currentOrientation.alpha = e.alpha
+                currentOrientation.beta = e.beta
+                currentOrientation.gamma = e.gamma
 
-                    const relativeGamma = currentOrientation.gamma - calibration.gamma
-                    const relativeBeta = currentOrientation.beta - calibration.beta
+                if (!calibrated) {
+                    return
+                }
 
-                    keysPressed.set(FORWARD, false)
-                    keysPressed.set(BACK, false)
-                    keysPressed.set(RIGHT, false)
-                    keysPressed.set(LEFT, false)
-                    if (relativeGamma < -10 && relativeGamma > -80) {
-                        speed = Math.min((Math.abs(relativeGamma) - 10) * (100/40), 100)
-                        slider.noUiSlider.set(speed)
-                        keysPressed.set(FORWARD, true)
-                    } else if (relativeGamma > 10 && relativeGamma < 80) {
-                        speed = Math.min((Math.abs(relativeGamma) - 10) * (100/40), 100)
-                        slider.noUiSlider.set(speed)
-                        keysPressed.set(BACK, true)
-                    }
-                    if(relativeBeta < -20) {
-                        keysPressed.set(RIGHT, true)
-                    } else if (relativeBeta > 20) {
-                        keysPressed.set(LEFT, true)
-                    }
-                })
-            }
+                const relativeGamma = currentOrientation.gamma - calibration.gamma
+                const relativeBeta = currentOrientation.beta - calibration.beta
+
+                keysPressed.set(FORWARD, false)
+                keysPressed.set(BACK, false)
+                keysPressed.set(RIGHT, false)
+                keysPressed.set(LEFT, false)
+                if (relativeGamma < -10 && relativeGamma > -80) {
+                    speed = Math.min((Math.abs(relativeGamma) - 10) * (100/40), 100)
+                    slider.noUiSlider.set(speed)
+                    keysPressed.set(FORWARD, true)
+                } else if (relativeGamma > 10 && relativeGamma < 80) {
+                    speed = Math.min((Math.abs(relativeGamma) - 10) * (100/40), 100)
+                    slider.noUiSlider.set(speed)
+                    keysPressed.set(BACK, true)
+                }
+                if(relativeBeta < -20) {
+                    keysPressed.set(RIGHT, true)
+                } else if (relativeBeta > 20) {
+                    keysPressed.set(LEFT, true)
+                }
+            })
         } else {
             document.getElementById('calibrate').style.display = 'none';
         }

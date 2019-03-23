@@ -20,7 +20,7 @@ case "$1" in
 	killall go-pibot
 	pkill uv4l
 	sleep 2
-	uv4l -nopreview --auto-video_nr --driver raspicam --encoding mjpeg --width 640 --height 480 --framerate 10 --server-option '--port=9090' --server-option '--max-queued-connections=30' --server-option '--max-streams=25' --server-option '--max-threads=29'
+	uv4l -nopreview --auto-video_nr --driver raspicam --encoding mjpeg --width 320 --height 240 --framerate 10 --server-option '--port=9090' --server-option '--max-queued-connections=30' --server-option '--max-streams=25' --server-option '--max-threads=29'
 	echo "starting go-pibot"
 	/usr/local/bin/pibotstart.sh
 

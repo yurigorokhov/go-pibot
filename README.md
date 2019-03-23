@@ -10,5 +10,5 @@ docker build -t pibot .
 
 Then launch the container, this will share the `./public` directory, thus any changes you make inside that folder will appear immediately
 ```
-docker run -i -t --rm -p 8080:8080 -v "$PWD/public"":/opt/src/app/public -w /opt/src/app pibot /go/src/app/app
+docker run -i -t --rm -p 8080:8080 -v "$PWD/public":/go/public -w /go pibot /go/app -robot mock
 ```

@@ -15,10 +15,70 @@ const COMMAND_FORWARD_LEFT = 6;
 const COMMAND_BACK_RIGHT = 7;
 const COMMAND_BACK_LEFT = 8;
 
+let _indicator = {};
+let _canvas = {};
+
 function connectWS() {
     const uri = new URL(document.location.toString());
     let wsUri = `ws://${uri.host}/ws`;
     return new WebSocket(wsUri);
+}
+function setupIndicator() {
+    let canvas = new fabric.Canvas('canvas');
+    let rect = new fabric.Rect({
+        fill: 'red',
+        width: 50,
+        height: 80,
+        left: 15,
+        top: 50
+    });
+    let triangle = new fabric.Triangle({
+        fill: 'red',
+        width: 80,
+        height: 50
+    });
+    let arrow = new fabric.Group([rect, triangle]);
+    arrow.set({top: 65, left: 75, originX: 'center', originY: 'center'})
+    canvas.add(arrow);
+    _canvas = canvas;
+    _indicator = arrow;
+}
+function updateIndicator(command, speed) {
+    switch (command) {
+        case COMMAND_FORWARD:
+        case COMMAND_STOP:
+            _indicator.set({angle: 0});
+            break;
+        case COMMAND_BACK:
+            _indicator.set({angle: 180});
+            break;
+        case COMMAND_LEFT:
+            _indicator.set({angle: -90});
+            break;
+        case COMMAND_RIGHT:
+            _indicator.set({angle: 90});
+            break;
+        case COMMAND_FORWARD_LEFT:
+            _indicator.set({angle: -45});
+            break;
+        case COMMAND_FORWARD_RIGHT:
+            _indicator.set({angle: 45});
+            break;
+        case COMMAND_BACK_LEFT:
+            _indicator.set({angle: -135});
+            break;
+        case COMMAND_BACK_RIGHT:
+            _indicator.set({angle: 135});
+            break;
+        default:
+            break;
+    }
+    if(speed === 0) {
+        _indicator.forEachObject(x => x.set({fill: 'none'}), this);
+    } else {
+        _indicator.forEachObject(x => x.set({fill: `hsl(${120/100 * speed}, 100%, 50%)`}), this);
+    }
+    _canvas.renderAll();
 }
 function generateCommand(direction, speed) {
     return {
@@ -61,6 +121,7 @@ function sendCommand(ws, keysPressed, speed) {
     }
     let commandJson = generateCommand(command, speed);
     ws.send(JSON.stringify(commandJson));
+    updateIndicator(command, speed);
 }
 (() => {
     let currentOrientation = {
@@ -76,6 +137,7 @@ function sendCommand(ws, keysPressed, speed) {
 
     var videoHref = "http://" + window.location.hostname + ":9090/stream/video.mjpeg";
     document.getElementById('main-video-img').setAttribute("src", videoHref);
+    setupIndicator();
     const slider = document.getElementById('slider');
     let speed = 50;
     const keysPressed = new Map([

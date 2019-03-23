@@ -74,7 +74,7 @@ function updateIndicator(command, speed) {
             break;
     }
     if(speed === 0) {
-        _indicator.forEachObject(x => x.set({fill: 'none'}), this);
+        _indicator.forEachObject(x => x.set({fill: 'rgba(0,0,0,0)'}), this);
     } else {
         _indicator.forEachObject(x => x.set({fill: `hsl(${120/100 * speed}, 100%, 50%)`}), this);
     }

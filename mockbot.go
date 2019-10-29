@@ -16,3 +16,4 @@ func (robot *MockBot) GetTurnSpeedDifferential() float64 { return 40 }
 func (robot *MockBot) SetLeftMotorSpeed(speed int16)     {}
 func (robot *MockBot) SetRightMotorSpeed(speed int16)    {}
 func (robot *MockBot) StopAllMotors()                    {}
+func (robot *MockBot) IsCameraAvailable() bool			 { return false }

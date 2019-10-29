@@ -14,6 +14,7 @@ type Robot interface {
 	GetMaxMotorSpeed() float64
 	GetMinMotorSpeed() float64
 	GetTurnSpeedDifferential() float64
+	IsCameraAvailable() bool
 }
 
 type RobotController struct {

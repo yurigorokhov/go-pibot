@@ -40,3 +40,5 @@ func (robot *MegaPiBot) StopAllMotors() {
 	robot.leftMotor.Speed(0)
 	robot.rightMotor.Speed(0)
 }
+
+func (robot *MegaPiBot) IsCameraAvailable() bool 			{ return true }

@@ -2,16 +2,19 @@ package main
 
 import (
 	"flag"
+	"log"
+	"net/http"
+
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"gobot.io/x/gobot"
 	"gobot.io/x/gobot/platforms/megapi"
-	"log"
 
 	"golang.org/x/net/websocket"
 )
 
 var robotType string
+var robot *Robot
 
 func init() {
 	flag.StringVar(&robotType, "robot", "megapi", "the robot to use (megapi, mock)")
@@ -22,6 +25,7 @@ func initializeRobot(robotCommandChannel <-chan RobotMoveCommand) {
 	if robotType == "mock" {
 		log.Println("Starting with a Mock bot")
 		mockBot := NewMockBot()
+		robot = &mockBot
 		robotController := NewRobotController(mockBot, robotCommandChannel)
 		robotController.Start()
 	} else if robotType == "megapi" {
@@ -33,6 +37,7 @@ func initializeRobot(robotCommandChannel <-chan RobotMoveCommand) {
 
 		// create robot
 		megaPiRobot := NewMegaPiBot(leftMotor, rightMotor)
+		robot = &megaPiRobot
 		robotController := NewRobotController(megaPiRobot, robotCommandChannel)
 
 		// define work
@@ -43,12 +48,12 @@ func initializeRobot(robotCommandChannel <-chan RobotMoveCommand) {
 		devices := make([]gobot.Device, 2)
 		devices[0] = gobot.Device(leftMotor)
 		devices[1] = rightMotor
-		robot := gobot.NewRobot("megaPiBot",
+		goBotRobot := gobot.NewRobot("megaPiBot",
 			[]gobot.Connection{megaPiAdaptor},
 			[]gobot.Device{leftMotor, rightMotor},
 			work,
 		)
-		robot.Start()
+		goBotRobot.Start()
 	} else {
 		panic("Unsupported robot type")
 	}
@@ -69,6 +74,9 @@ func main() {
 	e.Static("/public", "public")
 	e.File("/", "public/index.html")
 	e.File("/logo.png", "public/raspberry-pi-logo.png")
+	e.GET("/robot", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]bool{"has_camera": (*robot).IsCameraAvailable()})
+	})
 	e.GET("/ws", echo.WrapHandler(webSocketHandler(webSocketPool)))
 	e.Logger.Fatal(e.Start(":8080"))
 }
